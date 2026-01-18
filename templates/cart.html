@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Корзина{% endblock %}
+{% block content %}
+<div class="page-centered scrollable-page">
+  <h2>Ваша корзина</h2>
+  <div id="cart-items"></div>
+  <form id="cart-form" class="form-box" style="width:100%;">
+    <label>ФИО *</label>
+  <input type="text" id="fullname" placeholder="Иванов Иван Иванович" required>
+
+  <label>Номер телефона *</label>
+  <input type="tel" id="phone" placeholder="+7 (999) 123-45-67" required>
+
+  <label>Почтовый индекс *</label>
+  <input type="text" id="postcode" placeholder="125000" required>
+
+  <button type="submit" class="btn btn-success">Оформить заказ</button>
+</form>
+</div>
+<button class="btn btn-warning" onclick="location.href='/shop'" style="margin-top:20px;">← Назад в магазин</button>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => document.body.removeChild(toast), 400);
+    }, 3000);
+  }
+
+  function loadCart() {
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const container = document.getElementById('cart-items');
+
+    if (cart.length === 0) {
+      container.innerHTML = '<p style="text-align:center;color:#aaa;margin:20px;">Корзина пуста</p>';
+      return;
+    }
+
+    let html = '<h3 style="margin:20px 0 10px;">Товары:</h3>';
+    let total = 0;
+    cart.forEach((item, index) => {
+      html += `
+        <div class="cart-item">
+          <span>${item.product}</span>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span>${item.price} 🪙</span>
+            <button class="remove-btn" onclick="removeFromCart(${index})">×</button>
+          </div>
+        </div>`;
+      total += item.price;
+    });
+    html += `<div style="text-align:right;margin-top:16px;font-weight:bold;color:#FFD700;">Итого: ${total} 🪙</div>`;
+    container.innerHTML = html;
+  }
+
+  function removeFromCart(index) {
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+    cart.splice(index, 1);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    loadCart();
+    showToast('Товар удалён', 'success');
+  }
+
+  document.getElementById('cart-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    if (cart.length === 0) return showToast('Корзина пуста!', 'error');
+
+    const orderData = {
+      fullname: document.getElementById('fullname').value.trim(),
+      phone: document.getElementById('phone').value.trim(),
+      postcode: document.getElementById('postcode').value.trim(),
+      cart: cart
+    };
+
+    const res = await fetch('/api/save_cart', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(orderData)
+    });
+    const result = await res.json();
+
+    if (result.success) {
+      localStorage.removeItem('cart');
+      showToast(`✅ Заказ оформлен!\nНовый баланс: ${result.new_balance} 🪙`, 'success');
+      setTimeout(() => location.href = '/dashboard', 2000);
+    } else {
+      showToast('Ошибка: ' + result.error, 'error');
+    }
+  });
+
+  loadCart();
+</script>
+{% endblock %}

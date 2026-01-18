@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-centered">
+  <div class="dashboard-buttons">
+    <button class="btn btn-large" onclick="location.href='/report'">Заполнить отчёт</button>
+    <button class="btn btn-large" onclick="location.href='/shop'">Магазин</button>
+
+    <div class="row-two">
+      <button class="btn btn-medium" onclick="location.href='/objects'">Объекты</button>
+      <button class="btn btn-medium" onclick="openInstruction()">Памятка</button>
+    </div>
+
+    <button class="btn btn-large" onclick="window.open('https://disk.yandex.ru/d/J4O39h7a-TcNJg', '_blank')">Посмотреть отчёты</button>
+
+    <div class="row-two">
+      <button class="btn btn-medium" onclick="window.open('https://t.me/feelintownbot', '_blank')">Сертификат</button>
+      <div class="support-wrapper">
+        <a href="https://t.me/feelintownbot" target="_blank" class="support-btn">
+          <img src="/static/png/sup.png" alt="Поддержка">
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="instruction-modal" class="modal hidden">
+  <div class="modal-content-instruction">
+    <img id="instruction-img" src="/static/png/instruction.png" alt="Памятка">
+    <button class="btn close-btn" onclick="closeInstruction()">← Назад</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function openInstruction() {
+    document.getElementById('instruction-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeInstruction() {
+    document.getElementById('instruction-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Магазин{% endblock %}
+{% block content %}
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin: 20px 0;
+    width: 100%;
+  }
+
+  .item {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .item:hover {
+    transform: translateY(-4px);
+  }
+
+  .item img {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    margin-bottom: 10px;
+  }
+
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal-content {
+    background: #1e1e57;
+    color: white;
+    padding: 20px;
+    border-radius: 16px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  }
+
+  .modal-img {
+    width: 200px;
+    height: 200px;
+    object-fit: contain;
+    background: white;
+    padding: 8px;
+    border-radius: 8px;
+    margin: 0 auto 16px;
+  }
+
+  .cart-btn {
+    background: #4caf50;
+    margin-top: 10px;
+  }
+</style>
+
+<h2 style="text-align:center;margin-bottom:24px;">Магазин</h2>
+
+<div class="grid">
+  <div class="item" onclick="openModal('Значок', 200, 'Металлический значок с эмблемой проекта.', '/static/png/znachok.png')">
+    <img src="/static/png/znachok.png" alt="Значок">
+    <div>Значок<br>200🪙</div>
+  </div>
+  <div class="item" onclick="openModal('Шопер', 500, 'Хлопковый шопер с логотипом проекта.', '/static/png/shoper.png')">
+    <img src="/static/png/shoper.png" alt="Шопер">
+    <div>Шопер<br>500🪙</div>
+  </div>
+  <div class="item" onclick="openModal('Футболка', 700, 'Хлопковая футболка с логотипом проекта.', '/static/png/t-shirt.png')">
+    <img src="/static/png/t-shirt.png" alt="Футболка">
+    <div>Футболка<br>700🪙</div>
+  </div>
+  <div class="item" onclick="openModal('Аккумулятор', 1000, 'Портативный аккумулятор ёмкостью 5000 мА·ч.', '/static/png/akkum.png')">
+    <img src="/static/png/akkum.png" alt="Аккумулятор">
+    <div>Аккумулятор<br>1000🪙</div>
+  </div>
+</div>
+
+<button class="btn" onclick="location.href='/cart'" style="background:#ff9800;">Корзина</button>
+<button class="btn" onclick="location.href='/dashboard'" style="margin-left:10px;">← Назад</button>
+
+<div id="product-modal" class="modal">
+  <div class="modal-content">
+    <img id="modal-img" class="modal-img" src="" alt="">
+    <h3 id="modal-title"></h3>
+    <p id="modal-desc"></p>
+    <div>Цена: <b id="modal-price"></b> 🪙</div>
+    <button class="btn cart-btn" onclick="addToCart()">В корзину</button>
+    <button class="btn" onclick="closeModal()" style="background:#f44336;margin-top:10px;">Закрыть</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let selectedProduct = null;
+  let selectedPrice = 0;
+
+  function openModal(name, price, desc, img) {
+    document.getElementById('modal-title').textContent = name;
+    document.getElementById('modal-desc').textContent = desc;
+    document.getElementById('modal-price').textContent = price;
+    document.getElementById('modal-img').src = img;
+    selectedProduct = name;
+    selectedPrice = price;
+    document.getElementById('product-modal').style.display = 'flex';
+  }
+
+  function closeModal() {
+    document.getElementById('product-modal').style.display = 'none';
+  }
+
+  function addToCart() {
+    const userBalance = {{ balance }};
+    if (userBalance < selectedPrice) {
+      showToast('❌ Недостаточно валюты!', 'error');
+      closeModal();
+      return;
+    }
+
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+    cart.push({ product: selectedProduct, price: selectedPrice });
+    localStorage.setItem('cart', JSON.stringify(cart));
+
+    showToast('✅ Товар добавлен в корзину!', 'success');
+    closeModal();
+  }
+</script>
+{% endblock %}

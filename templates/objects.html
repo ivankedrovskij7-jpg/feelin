@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Выбор объектов{% endblock %}
+{% block content %}
+<div class="page-centered">
+  <style>
+    #region, #district {
+      width: 100%;
+      max-width: 320px;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.12);
+      color: white;
+      font-size: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      margin: 8px 0;
+    }
+    #region:focus, #district:focus {
+      outline: none;
+      border-color: #6a11cb;
+      background: rgba(255, 255, 255, 0.18);
+      box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.3);
+    }
+    #region option, #district option {
+      color: #000 !important;
+      background: #fff !important;
+    }
+    #district-container { display: none; }
+    .object-item {
+      background: rgba(40, 35, 90, 0.5);
+      padding: 12px;
+      margin: 6px 0;
+      border-radius: 10px;
+      border-left: 3px solid var(--warning);
+      text-align: center;
+      font-size: 15px;
+      white-space: pre-line;
+    }
+  </style>
+
+  <h2>Выберите регион и район</h2>
+  <label for="region">Регион:</label>
+  <select id="region">
+    <option value="">— Выберите регион —</option>
+    <option value="Самарская область">Самарская область</option>
+    <option value="Москва">Москва</option>
+    <option value="Санкт-Петербург">Санкт-Петербург</option>
+  </select>
+
+  <div id="district-container">
+    <label for="district">Район:</label>
+    <select id="district">
+      <option value="">— Выберите район —</option>
+    </select>
+  </div>
+
+  <div id="objects">
+    <p>Выберите регион, чтобы увидеть доступные объекты.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Данные: объекты по регионам и районам
+const data = {
+  "Москва": {
+    "объекты": [
+      "Дом Перовских (деревянный), начало XIX в.\nАдрес: Новая Басманная улица, дом 27, строение 1",
+      "Жилой дом, вторая половина XIX в.\nАдрес: Большая Татарская улица, дом 23",
+      "Дом, в котором жил Демьян Бедный (Ефим Алексеевич Придворов)\nАдрес: Рождественский бульвар, дом 16, строение 2"
+    ]
+  },
+  "Санкт-Петербург": {
+    "объекты": [
+      "Дом М. Маркевича\nАдрес: Большая Татарская улица, дом 23",
+      "Дома купца Челышева\nАдрес: Английская наб., 26 (б. Красного флота наб.); Галерная ул., 25",
+      "Жилой дом\nАдрес: Антоненко пер., 10; Казанская ул., 31"
+    ]
+  },
+  "Самарская область": {
+    "районы": {
+      "Самара": [
+        "Дом вдовы чиновника А.А. Ястребова в 110 квартале\nАдрес: ул. Вилоновская, 26 / ул. Галактионовская, 143, литера А",
+        "Жилой дом на усадьбе Н.Т. Дуравина\nАдрес: ул. Некрасовская, 39, литеры А, А1, А2"
+      ],
+      "Тольятти": [
+        "Гостиница-дача «Белокаменная»\nАдрес: ул. Комзина, 8а",
+        "Дом, в котором останавливался в 1870 году И.Е. Репин\nАдрес: пр. Репина, 8"
+      ],
+      "Жигулёвск": [
+        "Дом усадьбы Ванюшина (2 эт., жилой)\nАдрес: ул. Набережная, 14",
+        "Дом поэта А.Ширяевца (А.В. Абрамова)\nАдрес: с. Ширяево, ул. Ширяевца, 13"
+      ]
+    }
+  }
+};
+
+const regionSelect = document.getElementById('region');
+const districtContainer = document.getElementById('district-container');
+const districtSelect = document.getElementById('district');
+const objectsDiv = document.getElementById('objects');
+
+regionSelect.addEventListener('change', function () {
+  const region = this.value;
+  districtSelect.innerHTML = '<option value="">— Выберите район —</option>';
+
+  if (region === "Самарская область") {
+    districtContainer.style.display = 'block';
+    const districts = Object.keys(data["Самарская область"].районы);
+    districts.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d;
+      opt.textContent = d;
+      districtSelect.appendChild(opt);
+    });
+    showObjects();
+  } else {
+    districtContainer.style.display = 'none';
+    if (region && data[region]) {
+      renderObjects(data[region].объекты || []);
+    } else {
+      objectsDiv.innerHTML = '<p>Выберите регион.</p>';
+    }
+  }
+});
+
+districtSelect.addEventListener('change', showObjects);
+
+function showObjects() {
+  const region = regionSelect.value;
+  const district = districtSelect.value;
+
+  if (region === "Самарская область" && district) {
+    const objs = data["Самарская область"].районы[district] || [];
+    renderObjects(objs);
+  } else if (region !== "Самарская область" && region) {
+    const objs = data[region]?.объекты || [];
+    renderObjects(objs);
+  } else {
+    objectsDiv.innerHTML = '<p>Выберите регион и (при необходимости) район.</p>';
+  }
+}
+
+function renderObjects(objects) {
+  if (objects.length === 0) {
+    objectsDiv.innerHTML = '<p>Нет объектов для выбранного региона/района.</p>';
+    return;
+  }
+  objectsDiv.innerHTML = '<h3>Доступные объекты:</h3>' +
+    objects.map(obj => `<div class="object-item">${obj}</div>`).join('');
+}
+</script>
+{% endblock %}

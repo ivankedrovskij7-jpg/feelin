@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-centered">
+  <div id="login-form" class="form-box">
+    <h2>Вход</h2>
+    <input type="text" id="login-username" placeholder="Логин" autocomplete="username">
+    <input type="password" id="login-password" placeholder="Пароль" autocomplete="current-password">
+    <button class="btn" onclick="login()">Войти</button>
+    <div style="text-align:center;margin-top:20px;">
+      Нет аккаунта? <a href="#" onclick="showRegister()" style="color:#FFD700; font-weight:bold;">Регистрация</a>
+    </div>
+  </div>
+
+  <div id="register-form" class="form-box hidden">
+    <h2>Регистрация</h2>
+    <input type="text" id="reg-login" placeholder="Логин" autocomplete="username">
+    <input type="password" id="reg-pass" placeholder="Пароль" autocomplete="new-password">
+    <button class="btn" onclick="register()">Зарегистрироваться</button>
+    <div style="text-align:center;margin-top:20px;">
+      Уже есть аккаунт? <a href="#" onclick="showLogin()" style="color:#FFD700; font-weight:bold;">Войти</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function showRegister() {
+    document.getElementById('login-form').classList.add('hidden');
+    document.getElementById('register-form').classList.remove('hidden');
+  }
+
+  function showLogin() {
+    document.getElementById('register-form').classList.add('hidden');
+    document.getElementById('login-form').classList.remove('hidden');
+  }
+
+  async function register() {
+    const login = document.getElementById('reg-login').value;
+    const pass = document.getElementById('reg-pass').value;
+    if (!login || !pass) {
+      showToast('Заполните все поля', 'error');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({username: login, password: pass})
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        showToast('✅ Регистрация успешна!', 'success');
+        setTimeout(showLogin, 1500);
+      } else {
+        showToast(data.error, 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Ошибка подключения', 'error');
+    }
+  }
+
+  async function login() {
+    const login = document.getElementById('login-username').value;
+    const pass = document.getElementById('login-password').value;
+    if (!login || !pass) {
+      showToast('Заполните все поля', 'error');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({username: login, password: pass})
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        showToast('✅ Добро пожаловать!', 'success');
+        setTimeout(() => location.href = '/dashboard', 1000);
+      } else {
+        showToast(data.error, 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Ошибка подключения', 'error');
+    }
+  }
+
+  function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 400);
+    }, 3000);
+  }
+</script>
+{% endblock %}

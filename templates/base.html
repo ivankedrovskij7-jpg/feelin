@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <title>{% block title %}Филин{% endblock %}</title>
+</head>
+<body>
+
+  {% if username or request.endpoint != 'index' %}
+    <div class="user-header">
+      {% if request.endpoint != 'index' %}
+        <a href="#" onclick="window.history.back()" class="back-arrow">←</a>
+      {% endif %}
+      {% if username %}
+        <span>Привет, {{ username }}! Баланс: {{ balance }} 🪙</span>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div class="container">
+    {% block content %}{% endblock %}
+  </div>
+
+  <script>
+    function showToast(message, type = 'info') {
+      const oldToast = document.querySelector('.toast');
+      if (oldToast) oldToast.remove();
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.classList.add('show'), 10);
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 400);
+      }, 3000);
+    }
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

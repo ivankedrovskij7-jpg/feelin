@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Отчёт{% endblock %}
+{% block content %}
+<div class="page-centered scrollable-page">
+  <h2 style="text-align:center;margin-bottom:20px;">Заполнение отчёта</h2>
+  <form id="reportForm" class="form-box" style="width:100%;">
+  <label>Дата</label>
+  <input type="date" id="date" name="date" required>
+
+  <label>Время</label>
+  <input type="time" id="time" name="time" required>
+
+  <label>Наименование объекта</label>
+  <input type="text" id="name" name="name" placeholder="Например: Дом №12" required>
+
+  <label>Адрес объекта</label>
+  <textarea id="address" name="address" placeholder="г. Самара, ул. Фрунзе..." required></textarea>
+
+  <label>Состояние объекта</label>
+  <textarea id="state" name="state" placeholder="Опишите подробно..." required></textarea>
+
+  <label>Фотофиксация</label>
+  <input type="file" id="photos" name="photos" accept="image/*" multiple>
+  <div id="preview" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;"></div>
+
+  <button type="submit" class="btn" style="margin-top:20px;">Отправить отчёт (+100 🪙)</button>
+</form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let files = [];
+
+  document.getElementById('photos').addEventListener('change', () => {
+    const newFiles = Array.from(document.getElementById('photos').files);
+    files = [...files, ...newFiles];
+    renderPreview();
+  });
+
+  function renderPreview() {
+    const previewDiv = document.getElementById('preview');
+    previewDiv.innerHTML = '';
+    files.forEach((f, i) => {
+      const container = document.createElement('div');
+      container.style.position = 'relative';
+      container.style.width = '80px';
+      container.style.height = '80px';
+      container.style.borderRadius = '8px';
+      container.style.overflow = 'hidden';
+      container.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+      container.style.background = '#fff';
+
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(f);
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'cover';
+
+      const removeBtn = document.createElement('div');
+      removeBtn.textContent = '×';
+      removeBtn.style.position = 'absolute';
+      removeBtn.style.top = '-8px';
+      removeBtn.style.right = '-8px';
+      removeBtn.style.width = '24px';
+      removeBtn.style.height = '24px';
+      removeBtn.style.backgroundColor = '#e53e3e';
+      removeBtn.style.color = 'white';
+      removeBtn.style.borderRadius = '50%';
+      removeBtn.style.display = 'flex';
+      removeBtn.style.alignItems = 'center';
+      removeBtn.style.justifyContent = 'center';
+      removeBtn.style.cursor = 'pointer';
+      removeBtn.style.fontWeight = 'bold';
+      removeBtn.style.fontSize = '14px';
+      removeBtn.onclick = () => {
+        files.splice(i, 1);
+        renderPreview();
+        updateFileInput();
+      };
+
+      container.appendChild(img);
+      container.appendChild(removeBtn);
+      previewDiv.appendChild(container);
+    });
+  }
+
+  function updateFileInput() {
+    const dt = new DataTransfer();
+    files.forEach(file => dt.items.add(file));
+    document.getElementById('photos').files = dt.files;
+  }
+
+  function showToast(message, type = 'info', duration = 3000) {
+    // Удаляем предыдущий тост
+    const oldToast = document.querySelector('.toast');
+    if (oldToast) oldToast.remove();
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 10);
+
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 400);
+    }, duration);
+  }
+
+  document.getElementById('reportForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    updateFileInput();
+
+    const formData = new FormData(e.target);
+    const photos = formData.getAll('photos');
+
+    if (photos.length === 0 || photos.every(f => !f.name)) {
+      showToast('Добавьте хотя бы одну фотографию.', 'error');
+      return;
+    }
+
+    showToast('Загрузка...', 'info', 10000);
+
+    try {
+      const res = await fetch('/api/generate_report', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+
+      const loadingToast = document.querySelector('.toast');
+      if (loadingToast) loadingToast.remove();
+
+      if (data.success) {
+        showToast('✅ Отчёт успешно загружен!\n+100 🪙\nНовый баланс: ' + data.new_balance, 'success');
+        setTimeout(() => location.href = '/dashboard', 2500);
+      } else {
+        showToast('Ошибка: ' + (data.error || 'неизвестно'), 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      // Скрываем "Загрузка..."
+      const loadingToast = document.querySelector('.toast');
+      if (loadingToast) loadingToast.remove();
+      showToast('Ошибка подключения к серверу', 'error');
+    }
+  });
+</script>
+{% endblock %}
