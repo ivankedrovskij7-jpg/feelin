@@ -45,7 +45,6 @@ def upload_to_yandex_disk(file_path, disk_filename):
 
 @app.route('/wake-up')
 def wake_up():
-    """Эндпоинт для пробуждения сервера"""
     return jsonify({"status": "awake"})
 
 @app.route('/')
