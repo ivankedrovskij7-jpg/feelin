@@ -22,7 +22,7 @@
 }
 
 body {
-  background: var(--bg-darker); /* ← убираем градиент, чтобы не было "нижней части" */
+  background: var(--bg-darker);
   color: var(--text-light);
   min-height: 100dvh;
   display: flex;
